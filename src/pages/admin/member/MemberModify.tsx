@@ -78,6 +78,7 @@ const MemberModify = () => {
         if (data !== undefined && data.length > 0) {
           setMemberList(data);
           setTotalPages(Math.ceil(data[0].totalCnt / pageSize) * 10);
+          successAl("검색성공");
         } else {
           errorAl("검색 결과가 없습니다.");
         }
@@ -150,9 +151,6 @@ const MemberModify = () => {
       console.error("검색 오류:", error);
       errorAl("검색실패");
       return;
-    }
-    if ((memberList.length = 0)) {
-      successAl("검색성공");
     }
   };
   // 초기화 버튼
