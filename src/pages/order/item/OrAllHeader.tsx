@@ -15,7 +15,7 @@ import OrPicker from "../../../components/order/orderSlect/OrPicker";
 import { Dayjs } from "dayjs";
 import { getOrderAll, putOrderState } from "../../../api/order/orderAllApi";
 
-import { ConfigProvider, Table } from "antd";
+import { ConfigProvider, Table, message } from "antd";
 import TestMd from "../../../components/order/TestMd";
 import { API_SERVER_HOST } from "../../../util/util";
 import { useNavigate } from "react-router";
@@ -86,6 +86,22 @@ const OrAllHeader: React.FC<OrAllHeaderProps> = ({ tableNum }) => {
     // "2024-03-04",
     // "2024-03-04",
   ]); // Date picker 관리
+
+  // ============== 예외처리 알림을 넣어보아요 ==============
+  const [messageApi, contextHolder] = message.useMessage();
+  const successEvent = (txt: string) => {
+    messageApi.open({
+      type: "success",
+      content: txt,
+    });
+  };
+  const warningEvent = (txt: string) => {
+    messageApi.open({
+      type: "warning",
+      content: txt,
+    });
+  };
+  // ============== 예외처리 알림을 넣어보아요 ==============
 
   const iorderNavi = useNavigate();
   // const [userSearchActive, setUserSearchActive] = useState(true); // 검색버튼 옵션관리
@@ -265,26 +281,68 @@ const OrAllHeader: React.FC<OrAllHeaderProps> = ({ tableNum }) => {
   }, [paymentOp]);
 
   // 검색 버튼 클릭시 처리
-  const handleClickSearch = (
+  // const handleClickSearch = (
+  //   e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  // ) => {
+  //   e.preventDefault();
+  //   console.log("================= 버튼 클릭 ");
+  //   // setUserSearchActive(true);
+  //   fetchData();
+
+  //   console.log(
+  //     "검색버튼눌렀어융",
+  //     periodBt,
+  //     searchOp,
+  //     prdOp,
+  //     paymentOp,
+  //     stateOp,
+  //     // userSearchActive,
+  //     searchText,
+  //     selectedDate,
+  //   );
+  // };
+  // =============== 예외처리 ===============
+  const handleClickSearch = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
-    e.preventDefault();
-    console.log("================= 버튼 클릭 ");
-    // setUserSearchActive(true);
-    fetchData();
-
-    console.log(
-      "검색버튼눌렀어융",
-      periodBt,
-      searchOp,
-      prdOp,
-      paymentOp,
-      stateOp,
-      // userSearchActive,
-      searchText,
-      selectedDate,
-    );
+    try {
+      const successFn = (data: any) => {
+        setOrderData(data);
+        if (data.length !== 0) {
+          successEvent("검색 완료");
+        } else {
+          warningEvent("검색 결과가 없습니다.");
+        }
+      };
+      const failFn = (error: string) => {
+        console.error("목록 호출 오류:", error);
+        warningEvent("검색실패");
+      };
+      const errorFn = (error: string) => {
+        console.error("목록 호출 서버 에러:", error);
+        warningEvent("검색실패");
+      };
+      getOrderAll({
+        orderParam: {
+          processState: stateOp,
+          dateCategory: prdOp,
+          searchCategory: searchOp,
+          keyword: searchText,
+          startDate: selectedDate[0] !== undefined ? selectedDate[0] : "",
+          endDate: selectedDate[1] !== undefined ? selectedDate[1] : "",
+          dateFl: periodBt,
+          payCategory: paymentOp,
+          sort: 0,
+          page: 0,
+          // size: 1,
+        },
+        successFn,
+        failFn,
+        errorFn,
+      });
+    } catch (error) {}
   };
+  // =============== 예외처리 ===============
 
   const handleSearchreset = (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -302,7 +360,7 @@ const OrAllHeader: React.FC<OrAllHeaderProps> = ({ tableNum }) => {
     // 사용자는 검색을 했다.
     // setUserSearchActive(true);
     fetchData();
-
+    successEvent("검색 초기화 완료"); // < ------- 예외처리
     console.log(
       "초기화버튼눌렀어융",
       periodBt,
@@ -650,6 +708,8 @@ const OrAllHeader: React.FC<OrAllHeaderProps> = ({ tableNum }) => {
   return (
     <>
       <Wrap>
+        {/* 알림을 띄울 녀석 */}
+        {contextHolder}
         <MainTitle>전체리스트</MainTitle>
         <SubTitle>기본검색</SubTitle>
         <div style={{ marginBottom: "20px" }}>
